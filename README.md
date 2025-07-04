@@ -11,7 +11,7 @@ Este projeto fornece um protótipo simples de recomendador de filmes de terror, 
 
 1. Clone ou baixe este repositório e entre na pasta do projeto:
    ```powershell
-   git clone <URL-do-repositório>
+   git clone https://github.com/Jairson-Steinert/sistema-recomendacao-filmes-terror.git
    cd filmes
    ```
 
