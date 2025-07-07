@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste da API - Sistema de Recomendação IA</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #1a1a1a; 
+            color: #fff; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        .endpoint { 
+            background: #2d2d2d; 
+            border: 1px solid #8b0000; 
+            margin: 20px 0; 
+            padding: 20px; 
+            border-radius: 8px; 
+        }
+        .method { 
+            background: #8b0000; 
+            color: white; 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+        }
+        button { 
+            background: #8b0000; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            margin: 5px; 
+        }
+        button:hover { 
+            background: #a50000; 
+        }
+        .response { 
+            background: #000; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin-top: 10px; 
+            max-height: 400px; 
+            overflow-y: auto; 
+            font-family: monospace; 
+        }
+        input { 
+            background: #333; 
+            color: white; 
+            border: 1px solid #666; 
+            padding: 8px; 
+            margin: 5px; 
+        }
+        .error { color: #ff4444; }
+        .success { color: #44ff44; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 API de Recomendação de Filmes - Teste IA</h1>
+        
+        <div class="endpoint">
+            <h3><span class="method">GET</span> /api/status/ - Status do Serviço de IA</h3>
+            <button onclick="testStatus()">Testar Status</button>
+            <div id="status-response" class="response"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">GET</span> /api/movies/ - Listar Filmes</h3>
+            <input type="number" id="page" value="1" placeholder="Página">
+            <input type="number" id="limit" value="10" placeholder="Limite">
+            <button onclick="testMoviesList()">Listar Filmes</button>
+            <div id="movies-response" class="response"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">GET</span> /api/movies/{id}/ - Detalhes do Filme</h3>
+            <input type="number" id="movie-detail-id" value="1" placeholder="ID do Filme">
+            <button onclick="testMovieDetail()">Ver Detalhes</button>
+            <div id="movie-detail-response" class="response"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">POST</span> /api/recommendations/ - Recomendações IA</h3>
+            <input type="number" id="recommendation-movie-id" value="1" placeholder="ID do Filme">
+            <input type="number" id="recommendation-top-n" value="5" placeholder="Quantidade">
+            <button onclick="testRecommendations()">Gerar Recomendações IA</button>
+            <div id="recommendations-response" class="response"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">GET</span> /api/search/ - Buscar Filmes</h3>
+            <input type="text" id="search-query" value="The Nightmare" placeholder="Termo de busca">
+            <button onclick="testSearch()">Buscar</button>
+            <div id="search-response" class="response"></div>
+        </div>
+    </div>
+
+    <script>
+        function formatResponse(data) {
+            return JSON.stringify(data, null, 2);
+        }
+        
+        function showResponse(elementId, response, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = formatResponse(response);
+            element.className = 'response ' + (isError ? 'error' : 'success');
+        }
+        
+        async function testStatus() {
+            try {
+                const response = await fetch('/api/status/');
+                const data = await response.json();
+                showResponse('status-response', data, !response.ok);
+            } catch (error) {
+                showResponse('status-response', {error: error.message}, true);
+            }
+        }
+        
+        async function testMoviesList() {
+            try {
+                const page = document.getElementById('page').value;
+                const limit = document.getElementById('limit').value;
+                const response = await fetch(`/api/movies/?page=${page}&limit=${limit}`);
+                const data = await response.json();
+                showResponse('movies-response', data, !response.ok);
+            } catch (error) {
+                showResponse('movies-response', {error: error.message}, true);
+            }
+        }
+        
+        async function testMovieDetail() {
+            try {
+                const movieId = document.getElementById('movie-detail-id').value;
+                const response = await fetch(`/api/movies/${movieId}/`);
+                const data = await response.json();
+                showResponse('movie-detail-response', data, !response.ok);
+            } catch (error) {
+                showResponse('movie-detail-response', {error: error.message}, true);
+            }
+        }
+        
+        async function testRecommendations() {
+            try {
+                const movieId = document.getElementById('recommendation-movie-id').value;
+                const topN = document.getElementById('recommendation-top-n').value;
+                
+                const response = await fetch('/api/recommendations/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        movie_id: parseInt(movieId),
+                        top_n: parseInt(topN)
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('recommendations-response', data, !response.ok);
+            } catch (error) {
+                showResponse('recommendations-response', {error: error.message}, true);
+            }
+        }
+        
+        async function testSearch() {
+            try {
+                const query = document.getElementById('search-query').value;
+                const response = await fetch(`/api/search/?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                showResponse('search-response', data, !response.ok);
+            } catch (error) {
+                showResponse('search-response', {error: error.message}, true);
+            }
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Testar status automaticamente ao carregar
+        window.onload = function() {
+            testStatus();
+        };
+    </script>
+</body>
+</html>

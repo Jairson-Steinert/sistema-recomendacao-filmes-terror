@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Recomendador de Filmes de Terror{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome & Custom CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --horror-red: #8b0000;
+            --horror-black: #1a1a1a;
+            --horror-gray: #2d2d2d;
+            --horror-white: #f8f9fa;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--horror-black), var(--horror-gray));
+            color: var(--horror-white);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: var(--horror-black) !important;
+            box-shadow: 0 2px 10px rgba(139, 0, 0, 0.3);
+        }
+        
+        .navbar-brand {
+            color: var(--horror-red) !important;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .navbar-brand:hover {
+            color: #ff4444 !important;
+        }
+        
+        .card {
+            background: rgba(45, 45, 45, 0.9);
+            border: 1px solid var(--horror-red);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(139, 0, 0, 0.4);
+        }
+        
+        /* Desabilitar efeito hover de transformação no card de pesquisa para não mover dropdown */
+        #searchPanel .card:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--horror-red);
+            border-color: var(--horror-red);
+        }
+        
+        .btn-primary:hover {
+            background-color: #a50000;
+            border-color: #a50000;
+        }
+        
+        .form-control {
+            background-color: rgba(45, 45, 45, 0.9);
+            border: 1px solid var(--horror-red);
+            color: var(--horror-white);
+        }
+        
+        .form-control:focus {
+            background-color: rgba(45, 45, 45, 0.9);
+            border-color: #ff4444;
+            color: var(--horror-white);
+            box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.25);
+        }
+        
+        .form-control::placeholder {
+            color: #aaa;
+        }
+        
+        .rating-stars {
+            color: #ffc107;
+        }
+        
+        /* DESIGN ELEGANTE - Equilibrio perfeito entre legibilidade e sutileza */
+        .card-title {
+            color: #FFFFFF !important;
+            font-weight: 600;
+            font-size: 1.3rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        
+        .card-text {
+            color: #FFFFFF !important;
+            line-height: 1.6;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+        
+        .movie-title {
+            color: #FFFFFF !important;
+            font-weight: 600;
+            font-size: 1.2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            margin-bottom: 10px;
+        }
+        
+        .movie-info {
+            color: #FFFFFF !important;
+            font-size: 0.95rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+            font-weight: normal;
+        }
+        
+        .movie-year {
+            color: #E8E8E8 !important;
+            font-weight: normal;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+        
+        .movie-rating {
+            color: #FFD700 !important;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+        
+        .movie-genres {
+            background-color: rgba(139, 0, 0, 0.7) !important;
+            color: #FFFFFF !important;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-top: 5px;
+            font-weight: 500;
+            border: 1px solid rgba(139, 0, 0, 0.5);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+        
+        /* ELEMENTOS HARMONIOSOS */
+        .card .card-body h1, .card .card-body h2, .card .card-body h3, 
+        .card .card-body h4, .card .card-body h5, .card .card-body h6,
+        .card .card-body .movie-title, .card .card-body .card-title {
+            color: #FFFFFF !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+        
+        .card .card-body p, .card .card-body span, .card .card-body div, 
+        .card .card-body small {
+            color: #FFFFFF !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+            font-weight: normal;
+        }
+        
+        /* Elementos específicos com contraste suave */
+        .text-muted, .small, .text-secondary {
+            color: #E8E8E8 !important;
+            font-weight: normal !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+        
+        /* Breadcrumb e navegação */
+        .breadcrumb-item.active {
+            color: #FFFFFF !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+        
+        /* Links que não são botões */
+        .card a:not(.btn) {
+            color: #FF6B6B !important;
+            text-decoration: none;
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+        }
+        
+        .card a:not(.btn):hover {
+            color: #FF4444 !important;
+        }
+        
+        /* Rating stars com cor suave */
+        .rating-stars {
+            color: #FFC107 !important;
+        }
+        
+        .rating-stars i {
+            color: #FFC107 !important;
+        }
+        
+        .movie-card {
+            height: 100%;
+        }
+        
+        .card-img-placeholder {
+            height: 200px;
+            background: linear-gradient(45deg, var(--horror-gray), var(--horror-black));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--horror-red);
+            font-size: 3rem;
+        }
+        
+        .card-img-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        
+        .similarity-score {
+            background: var(--horror-red);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .footer {
+            background: var(--horror-black);
+            color: var(--horror-white);
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: auto;
+        }
+        /* Fix para dropdown de busca ficar sobreposto às recomendações */
+        #movieResults, .dropdown-menu {
+            position: absolute !important;
+            z-index: 9999 !important;
+            width: 100%;
+        }
+        /* Permitir que dropdown escape do card-body */
+        .card, .card .card-body {
+            overflow: visible !important;
+        }
+        /* Garantir que dropdown exibido esteja visível */
+        .dropdown-menu.show {
+            display: block !important;
+        }
+        /* Garantir que o painel de pesquisa seja sempre exibido acima de outros elementos */
+        #searchPanel {
+            position: relative !important;
+            z-index: 10000 !important;
+        }
+        /* Assegurar que itens focados no dropdown fiquem em destaque e acima */
+        .dropdown-item:focus {
+            position: relative;
+            z-index: 10001 !important;
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+            outline: none !important;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar principal -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'movies:home' %}"><i class="fas fa-skull"></i> Terror Recommender</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'movies:home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'movies:api_test' %}">API Test</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Sistema de Recomendação de Filmes de Terror</h5>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <strong>Equipe:</strong> Ana Carolina, Gustavo, Jairson<br>
+                        <strong>Professora:</strong> Dra. Vanessa de Oliveira Gil
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

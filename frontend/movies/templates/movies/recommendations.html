@@ -1,0 +1,254 @@
+{% extends 'movies/base.html' %}
+{% load static %}
+{% load movie_extras %}
+
+{% block title %}Recomendações para {{ selected_movie.title }} - Terror Movies{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-dark">
+                <li class="breadcrumb-item"><a href="{% url 'movies:home' %}" class="text-danger">Início</a></li>
+                <li class="breadcrumb-item active text-light">Recomendações</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Filme Selecionado -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-film"></i> Filme Selecionado
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h3 class="movie-title">{{ selected_movie.title }}</h3>
+                        
+                        <div class="mb-3">
+                            <div class="rating-stars mb-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= selected_movie.rating_stars %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ms-2 movie-rating">{{ selected_movie.vote_average|floatformat:1 }}/10</span>
+                                <small class="movie-info ms-2" style="color: #FFD700 !important; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.9);">({{ selected_movie.vote_count }} votos)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong class="text-danger">Gêneros:</strong><br>
+                                    {% for genre in selected_movie.genres_list %}
+                                        <span class="badge bg-secondary me-1">{{ genre }}</span>
+                                    {% endfor %}
+                                </p>
+                                
+                                {% if selected_movie.release_date %}
+                                    <p class="mb-2">
+                                        <strong class="text-danger">Ano:</strong> {{ selected_movie.release_date|date:"Y" }}
+                                    </p>
+                                {% endif %}
+                                
+                                {% if selected_movie.runtime %}
+                                    <p class="mb-2">
+                                        <strong class="text-danger">Duração:</strong> {{ selected_movie.runtime }} min
+                                    </p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong class="text-danger">Popularidade:</strong> {{ selected_movie.popularity|floatformat:0 }}
+                                </p>
+                                
+                                <p class="mb-2">
+                                    <strong class="text-danger">Idioma:</strong> {{ selected_movie.original_language|upper }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {% if selected_movie.overview %}
+                            <div class="mt-3">
+                                <strong class="text-danger">Sinopse:</strong>
+                                <p class="text-white" style="color: #FFFFFF !important; font-weight: normal; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">{{ selected_movie.overview }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        <div class="card-img-placeholder mb-3">
+                            <img src="{{ selected_movie.title|poster_url }}" alt="{{ selected_movie.title }}" class="img-fluid" style="width:100%; height:auto; object-fit:contain;" />
+                        </div>
+                        <a href="{% url 'movies:detail' selected_movie.pk %}" class="btn btn-outline-danger">
+                            <i class="fas fa-info-circle"></i> Ver Detalhes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recomendações -->
+{% if recommendations %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-danger mb-4">
+                <i class="fas fa-magic"></i> 
+                Filmes Recomendados Baseados em "{{ selected_movie.title }}"
+            </h2>
+            <p class="text-white mb-4" style="color: #FFFFFF !important; font-weight: normal; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
+                <i class="fas fa-info-circle"></i> 
+                Recomendações geradas usando similaridade TF-IDF dos gêneros e algoritmo de Machine Learning
+            </p>
+        </div>
+    </div>
+    
+    <div class="row">
+        {% for rec in recommendations %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card movie-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="similarity-score">
+                            <i class="fas fa-chart-line"></i> {{ rec.similarity_score|floatformat:3 }}
+                        </span>
+                        <small class="text-white" style="color: #FFFFFF !important; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">#{{ forloop.counter }}</small>
+                    </div>
+                    
+                    <div class="card-img-placeholder">
+                        <img src="{{ rec.movie.title|poster_url }}" alt="{{ rec.movie.title }} poster" class="img-fluid" style="width:100%; height:auto; object-fit:contain;" />
+                    </div>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title movie-title">{{ rec.movie.title }}</h5>
+                        
+                        <div class="rating-stars mb-2">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= rec.movie.rating_stars %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <span class="ms-1 movie-rating">{{ rec.movie.vote_average|floatformat:1 }}/10</span>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <div class="movie-genres">
+                                <i class="fas fa-tags"></i> 
+                                {% for genre in rec.movie.genres_list|slice:":3" %}
+                                    {{ genre }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                                {% if rec.movie.genres_list|length > 3 %}...{% endif %}
+                            </small>
+                        </div>
+                        
+                        {% if rec.movie.release_date %}
+                            <div class="mb-2">
+                                <small class="text-white" style="color: #FFFFFF !important; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                                    <i class="fas fa-calendar"></i> {{ rec.movie.release_date|date:"Y" }}
+                                </small>
+                            </div>
+                        {% endif %}
+                        
+                        {% if rec.movie.overview %}
+                            <p class="card-text flex-grow-1">
+                                <small>{{ rec.movie.overview|truncatewords:20 }}</small>
+                            </p>
+                        {% endif %}
+                        
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'movies:detail' rec.movie.pk %}" class="btn btn-outline-light btn-sm">
+                                    <i class="fas fa-info-circle"></i> Ver Detalhes
+                                </a>
+                                <a href="{% url 'movies:recommendations' rec.movie.pk %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-magic"></i> Suas Recomendações
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Informações sobre o algoritmo -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body">
+                    <h6 class="card-title text-danger">
+                        <i class="fas fa-brain"></i> Como Funciona o Algoritmo
+                    </h6>
+                    <p class="card-text small text-white mb-0" style="color: #FFFFFF !important; font-weight: normal; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                        <strong style="color: #FFFFFF !important; font-weight: 600;">TF-IDF + Similaridade de Cosseno:</strong> 
+                        O sistema analisa os gêneros dos filmes usando vetorização TF-IDF e calcula 
+                        a similaridade entre eles. Em caso de empate na similaridade, 
+                        a ordenação é feita pela nota média (vote_average) de forma descendente.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                    <h4>Não foi possível gerar recomendações</h4>
+                    <p class="text-white" style="color: #FFFFFF !important; font-weight: normal; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                        Isso pode acontecer se o algoritmo de recomendação ainda não foi inicializado 
+                        ou se houve algum problema no processamento.
+                    </p>
+                    <a href="{% url 'movies:home' %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Voltar à Lista de Filmes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Botão para voltar -->
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        <a href="{% url 'movies:home' %}" class="btn btn-outline-danger">
+            <i class="fas fa-arrow-left"></i> Voltar à Lista de Filmes
+        </a>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar tooltips para scores de similaridade
+    const scoreElements = document.querySelectorAll('.similarity-score');
+    scoreElements.forEach(element => {
+        element.setAttribute('title', 'Score de Similaridade baseado em TF-IDF');
+        element.setAttribute('data-bs-toggle', 'tooltip');
+    });
+    
+    // Inicializar tooltips do Bootstrap
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

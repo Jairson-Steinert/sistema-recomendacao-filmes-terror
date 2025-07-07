@@ -1,0 +1,492 @@
+{% extends 'movies/base.html' %}
+{% load static %}
+{% load movie_extras %}
+
+{% block title %}Sistema de Recomendação de Filmes de Terror{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Principal -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-3 text-danger mb-3">
+                <i class="fas fa-skull"></i> Terror Recommender
+            </h1>
+            <p class="lead text-light">
+                Sistema Inteligente de Recomendação de Filmes de Terror
+            </p>
+            <p class="text-muted">
+                <i class="fas fa-database"></i> {{ total_movies }} filmes disponíveis
+                | <i class="fas fa-robot"></i> IA Avançada para Recomendações
+            </p>
+        </div>
+    </div>
+
+    <!-- Painel Principal de Recomendação -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title text-center">
+                        <i class="fas fa-search"></i> Buscar Filmes
+                    </h5>
+                    <form method="get" class="d-flex">
+                        {{ search_form.search }}
+                        <button class="btn btn-primary ms-2" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                    {% if search_query %}
+                        <div class="mt-3">
+                            <small class="text-light" style="color: #E8E8E8 !important; font-weight: normal; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);">
+                                Resultados para: <strong style="color: #FFFFFF !important; font-weight: 500;">"{{ search_query }}"</strong>
+                                <a href="{% url 'movies:home' %}" class="text-danger ms-2" style="color: #FF4444 !important; font-weight: 500;">
+                                    <i class="fas fa-times"></i> Limpar
+                                </a>
+                            </small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title text-center">
+                        <i class="fas fa-magic"></i> Gerar Recomendações IA
+                    </h5>
+                    <form id="recommendationForm">
+                        <div class="mb-2 position-relative">
+                            <input 
+                                type="text" 
+                                id="movieSearch" 
+                                class="form-control" 
+                                placeholder="Digite o nome do filme..."
+                                autocomplete="off"
+                            >
+                            <div id="movieResults" class="dropdown-menu w-100 bg-dark border-danger text-light position-absolute" style="top:100%; left:0; max-height: 200px; overflow-y: auto; z-index: 9999;"></div>
+                        </div>
+                        <input type="hidden" id="selectedMovieId" name="movie_id" required>
+                        <div id="selectedMovie" class="mb-2" style="display: none;">
+                            <small class="text-success">
+                                <i class="fas fa-check"></i> 
+                                <span id="selectedMovieTitle"></span>
+                            </small>
+                        </div>
+                        <button class="btn btn-success w-100" type="submit" disabled id="recommendBtn">
+                            <i class="fas fa-wand-magic-sparkles"></i> Gerar Recomendações IA
+                        </button>
+                    </form>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Selecione um filme e receba recomendações personalizadas da IA
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Recommendations Section -->
+    {% if featured_recommendations %}
+    <div class="row mb-5" id="recommendations">
+        <div class="col-12">
+            <div class="card bg-dark border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-magic"></i> 
+                        {% if user_selected %}
+                            Recomendações Personalizadas
+                        {% else %}
+                            Recomendações Inteligentes
+                        {% endif %}
+                        {% if featured_movie %}
+                            <small class="d-block mt-1" style="font-size: 0.75rem; opacity: 0.9;">
+                                {% if user_selected %}
+                                    Baseado na sua escolha: {{ featured_movie.title }}
+                                {% else %}
+                                    Baseado em: {{ featured_movie.title }}
+                                {% endif %}
+                            </small>
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for movie in featured_recommendations %}
+                            <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                                <div class="card movie-card h-100" style="background: rgba(0,0,0,0.8);">
+                                    <div class="card-img-placeholder">
+                                        <img src="{{ movie.title|poster_url }}" alt="{{ movie.title }}" class="img-fluid">
+                                    </div>
+                                    <div class="card-body d-flex flex-column p-2">
+                                        <h6 class="card-title movie-title small">{{ movie.title }}</h6>
+                                        
+                                        <div class="mb-2">
+                                            <div class="rating-stars">
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= movie.rating_stars %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <span class="ms-1 movie-rating small">{{ movie.vote_average|floatformat:1 }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if movie.release_date %}
+                                            <div class="mb-2">
+                                                <span class="movie-year small" style="color: #E8E8E8 !important;">
+                                                    <i class="fas fa-calendar" style="color: #CCC;"></i> {{ movie.release_date|date:"Y" }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="mt-auto">
+                                            <div class="d-grid gap-1">
+                                                {% if movie.pk %}
+                                                    <a href="{% url 'movies:detail' movie.pk %}" class="btn btn-outline-light btn-sm">
+                                                        <i class="fas fa-info-circle"></i> Detalhes
+                                                    </a>
+                                                {% else %}
+                                                    <button class="btn btn-outline-secondary btn-sm" disabled>
+                                                        <i class="fas fa-exclamation-triangle"></i> ID inválido
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <p class="text-light mb-2">
+                            <i class="fas fa-robot"></i> 
+                            <strong>
+                                {% if user_selected %}
+                                    Recomendações personalizadas geradas por IA
+                                {% else %}
+                                    Recomendações geradas por Inteligência Artificial
+                                {% endif %}
+                            </strong>
+                        </p>
+                        <small class="text-muted d-block mb-3">
+                            {% if user_selected %}
+                                Baseado no filme que você escolheu: <strong>{{ featured_movie.title }}</strong>
+                            {% else %}
+                                Use o formulário acima para escolher um filme e gerar recomendações personalizadas
+                            {% endif %}
+                        </small>
+                        {% if not user_selected %}
+                            <button class="btn btn-outline-light btn-sm" onclick="generateNewRecommendations()">
+                                <i class="fas fa-sync-alt"></i> Gerar Novas Recomendações
+                            </button>
+                        {% else %}
+                            <a href="{% url 'movies:home' %}" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-home"></i> Voltar ao Início
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Movies Grid -->
+    {% if movies %}
+        <div class="row">
+            {% for movie in movies %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card movie-card h-100">
+                        <div class="card-img-placeholder">
+                            <img src="{{ movie.title|poster_url }}" alt="{{ movie.title }} poster" class="img-fluid">
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title movie-title">{{ movie.title }}</h6>
+                            
+                            <div class="mb-2">
+                                <div class="rating-stars">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= movie.rating_stars %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="ms-1 movie-rating">{{ movie.vote_average|floatformat:1 }}/10</span>
+                                </div>
+                            </div>
+                            
+                            {% if movie.release_date %}
+                                <div class="mb-2">
+                                    <span class="movie-year" style="color: #E8E8E8 !important; font-weight: normal; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);">
+                                        <i class="fas fa-calendar" style="color: #CCC;"></i> {{ movie.release_date|date:"Y" }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                            
+                            {% if movie.genres %}
+                                <div class="mb-2">
+                                    <div class="movie-genres" style="background-color: rgba(139, 0, 0, 0.7) !important; color: #FFFFFF !important; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); border: 1px solid rgba(139, 0, 0, 0.5); padding: 4px 8px; border-radius: 12px;">
+                                        <i class="fas fa-tags" style="color: #E8E8E8;"></i> 
+                                        {% for genre in movie.genres_list|slice:":2" %}
+                                            {{ genre }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                        {% if movie.genres_list|length > 2 %}...{% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if movie.overview %}
+                                <p class="card-text flex-grow-1 movie-info" style="color: #E8E8E8 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); font-weight: normal;">
+                                    <small style="color: #E8E8E8 !important; font-weight: normal; text-shadow: 1px 1px 2px rgba(0,0,0,0.6);">{{ movie.overview|truncatewords:15 }}</small>
+                                </p>
+                            {% endif %}
+                            
+                            <div class="mt-auto">
+                                <div class="d-grid gap-2">
+                                    {% if movie.pk %}
+                                        <a href="{% url 'movies:detail' movie.pk %}" class="btn btn-outline-light btn-sm">
+                                            <i class="fas fa-info-circle"></i> Detalhes
+                                        </a>
+                                        <a href="/?featured_movie={{ movie.pk }}#recommendations" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-magic"></i> Recomendações IA
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-outline-secondary btn-sm" disabled>
+                                            <i class="fas fa-exclamation-triangle"></i> ID inválido
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav aria-label="Navegação de páginas">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link bg-dark border-danger text-light" 
+                               href="?{% if search_query %}search={{ search_query }}&{% endif %}page=1">
+                                Primeira
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link bg-dark border-danger text-light" 
+                               href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                Anterior
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link bg-danger border-danger">
+                            {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link bg-dark border-danger text-light" 
+                               href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                Próxima
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link bg-dark border-danger text-light" 
+                               href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                                Última
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-ghost fa-3x text-muted mb-3"></i>
+                        <h4>Nenhum filme encontrado</h4>
+                        {% if search_query %}
+                            <p>Não encontramos filmes para "<strong>{{ search_query }}</strong>"</p>
+                            <a href="{% url 'movies:home' %}" class="btn btn-primary">
+                                <i class="fas fa-arrow-left"></i> Voltar para todos os filmes
+                            </a>
+                        {% else %}
+                            <p>Parece que ainda não temos filmes cadastrados no sistema.</p>
+                            <p class="text-muted">Execute o comando de importação de dados para carregar os filmes.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <script>
+    // Funcionalidade de busca dinâmica de filmes
+    document.addEventListener('DOMContentLoaded', function() {
+        const movieSearch = document.getElementById('movieSearch');
+        const movieResults = document.getElementById('movieResults');
+        const selectedMovieId = document.getElementById('selectedMovieId');
+        const selectedMovie = document.getElementById('selectedMovie');
+        const selectedMovieTitle = document.getElementById('selectedMovieTitle');
+        const recommendBtn = document.getElementById('recommendBtn');
+        const recommendationForm = document.getElementById('recommendationForm');
+        
+        let searchTimeout;
+        
+        // Busca dinâmica de filmes
+        movieSearch.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (query.length >= 2) {
+                    searchMovies(query);
+                } else {
+                    movieResults.style.display = 'none';
+                    movieResults.innerHTML = '';
+                }
+            }, 300);
+        });
+        
+        // Buscar filmes via API
+        function searchMovies(query) {
+            fetch(`/api/search/?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    movieResults.innerHTML = '';
+                    
+                    if (data.results && data.results.length > 0) {
+                        data.results.slice(0, 10).forEach(movie => {
+                            const item = document.createElement('a');
+                            item.className = 'dropdown-item';
+                            item.href = '#';
+                            item.innerHTML = `
+                                <div class="d-flex align-items-center">
+                                    <img src="${movie.poster_url}" alt="${movie.title}" class="me-2" style="width:40px; height:60px; object-fit:cover; border-radius:4px;">
+                                    <div>
+                                        <strong>${movie.title}</strong><br>
+                                        <small class="text-muted">
+                                            ${movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A'} • ⭐ ${movie.vote_average}/10
+                                        </small>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            item.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                selectMovie(movie.id, movie.title);
+                            });
+                            
+                            movieResults.appendChild(item);
+                        });
+                        
+                        // Exibir dropdown usando classe Bootstrap
+                        movieResults.classList.add('show');
+                    } else {
+                        movieResults.innerHTML = '<div class="dropdown-item-text">Nenhum filme encontrado</div>';
+                        movieResults.classList.add('show');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro na busca:', error);
+                    movieResults.innerHTML = '<div class="dropdown-item-text text-danger">Erro na busca</div>';
+                    movieResults.classList.add('show');
+                });
+        }
+        
+        // Selecionar filme
+        function selectMovie(movieId, movieTitle) {
+            selectedMovieId.value = movieId;
+            selectedMovieTitle.textContent = movieTitle;
+            movieSearch.value = movieTitle;
+            selectedMovie.style.display = 'block';
+            movieResults.style.display = 'none';
+            recommendBtn.disabled = false;
+        }
+        
+        // Limpar seleção quando o input é modificado
+        movieSearch.addEventListener('input', function() {
+            if (selectedMovieId.value) {
+                selectedMovieId.value = '';
+                selectedMovie.style.display = 'none';
+                recommendBtn.disabled = true;
+                // Ocultar dropdown se estiver aberto
+                movieResults.classList.remove('show');
+            }
+        });
+        
+        // Esconder resultados quando clicar fora
+        document.addEventListener('click', function(e) {
+            if (!movieSearch.contains(e.target) && !movieResults.contains(e.target)) {
+                // Ocultar dropdown
+                movieResults.classList.remove('show');
+            }
+        });
+        
+        // Envio do formulário de recomendações
+        recommendationForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const movieId = selectedMovieId.value;
+            if (!movieId) {
+                alert('Por favor, selecione um filme primeiro.');
+                return;
+            }
+            
+            // Redirecionar para a home com o filme selecionado
+            window.location.href = `/?featured_movie=${movieId}#recommendations`;
+        });
+    });
+
+    function generateNewRecommendations() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        
+        // Mostrar loading
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+        button.disabled = true;
+        
+        // Obter um filme aleatório para novas recomendações
+        fetch('/api/movies/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    // Selecionar um filme aleatório
+                    const randomIndex = Math.floor(Math.random() * Math.min(data.results.length, 20));
+                    const randomMovie = data.results[randomIndex];
+                    
+                    // Redirecionar para a home com parâmetro do filme selecionado
+                    window.location.href = `/?featured_movie=${randomMovie.id}`;
+                } else {
+                    // Fallback: apenas recarregar a página
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao gerar novas recomendações:', error);
+                // Fallback: recarregar a página
+                window.location.reload();
+            })
+            .finally(() => {
+                // Restaurar botão em caso de erro
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+    }
+    </script>
+</div>
+{% endblock %}

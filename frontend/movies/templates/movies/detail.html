@@ -1,0 +1,192 @@
+{% extends 'movies/base.html' %}
+{% load static %}
+{% load movie_extras %}
+
+{% block title %}{{ movie.title }} - Terror Movies{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'movies:home' %}" class="text-danger">
+                        <i class="fas fa-home"></i> Início
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">{{ movie.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Movie Details -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-img-placeholder d-flex align-items-center justify-content-center">
+                <img src="{{ movie.title|poster_url }}" alt="{{ movie.title }} poster" class="img-fluid" style="max-height:100%; object-fit:contain;" />
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h2 class="mb-0 movie-title">{{ movie.title }}</h2>
+            </div>
+            <div class="card-body">
+                <!-- Rating -->
+                <div class="mb-4">
+                    <div class="rating-stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= movie.rating_stars %}
+                                <i class="fas fa-star fa-lg"></i>
+                            {% else %}
+                                <i class="far fa-star fa-lg"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ms-2 h5">{{ movie.vote_average|floatformat:1 }}/10</span>
+                        <small class="text-muted ms-2">({{ movie.vote_count }} votos)</small>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <span class="badge bg-info">Popularidade: {{ movie.popularity|floatformat:1 }}</span>
+                    </div>
+                </div>
+                
+                <!-- Genres -->
+                {% if movie.genres %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-tags"></i> Gêneros</h5>
+                        {% for genre in movie.genres_list %}
+                            <span class="badge bg-secondary me-1 mb-1">{{ genre }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Overview -->
+                <!-- Overview/Sinopse: usa o texto local ou busca da API se ausente -->
+                {% with synopsis=movie.overview %}
+                    {% if synopsis %}
+                        <div class="mb-4">
+                            <h5><i class="fas fa-align-left"></i> Sinopse</h5>
+                            <p class="text-justify">{{ synopsis }}</p>
+                        </div>
+                    {% else %}
+                        {% with synopsis=movie.title|overview %}
+                            {% if synopsis %}
+                                <div class="mb-4">
+                                    <h5><i class="fas fa-align-left"></i> Sinopse</h5>
+                                    <p class="text-justify">{{ synopsis }}</p>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Movie Info -->
+                <div class="row mb-4">
+                    {% if movie.release_date %}
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-calendar"></i> Data de Lançamento</h6>
+                            <p>{{ movie.release_date|date:"d/m/Y" }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if movie.runtime %}
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-clock"></i> Duração</h6>
+                            <p>{{ movie.runtime }} minutos</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if movie.original_language %}
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-language"></i> Idioma Original</h6>
+                            <p>{{ movie.get_original_language_display|default:movie.original_language|upper }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Production Info -->
+                {% if movie.budget or movie.revenue %}
+                    <div class="mb-4">
+                        <h5><i class="fas fa-dollar-sign"></i> Informações de Produção</h5>
+                        <div class="row">
+                            {% if movie.budget %}
+                                <div class="col-md-6 mb-2">
+                                    <strong>Orçamento:</strong>
+                                    <span class="text-success">${{ movie.budget|floatformat:0 }}</span>
+                                </div>
+                            {% endif %}
+                            {% if movie.revenue %}
+                                <div class="col-md-6 mb-2">
+                                    <strong>Receita:</strong>
+                                    <span class="text-info">${{ movie.revenue|floatformat:0 }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if movie.budget and movie.revenue and movie.budget > 0 %}
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Lucro: 
+                                    <span class="{% if movie.revenue > movie.budget %}text-success{% else %}text-danger{% endif %}">
+                                        ${{ movie.revenue|add:movie.budget|floatformat:0 }}
+                                        ({{ movie.revenue|div:movie.budget|mul:100|floatformat:1 }}% de retorno)
+                                    </span>
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'movies:home' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Similar Movies Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="text-center mb-4">
+            <i class="fas fa-film"></i> Ação Rápida
+        </h3>
+        <div class="text-center">
+            <a href="{% url 'movies:home' %}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-search"></i> Buscar Outros Filmes
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.text-justify {
+    text-align: justify;
+}
+
+.badge {
+    font-size: 0.9rem;
+}
+
+.card-img-placeholder {
+    height: 400px;
+}
+
+@media (max-width: 768px) {
+    .card-img-placeholder {
+        height: 250px;
+    }
+}
+</style>
+{% endblock %}
