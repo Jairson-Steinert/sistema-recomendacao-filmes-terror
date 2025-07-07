@@ -1,3 +1,11 @@
 pandas
 scikit-learn
 numpy
+# Dependências para frontend Django e API
+Django>=4.2
+requests>=2.28
+djangorestframework>=3.14
+# Carregamento de variáveis de ambiente
+python-dotenv>=0.21.0
+# Dependência para matrices esparsas usadas pelo scikit-learn
+scipy>=1.10.0

@@ -60,7 +60,7 @@ def compute_similarity_matrix(tfidf_matrix):
     """
     # Limitar o número de filmes para evitar estouro de memória em ambientes com recursos limitados
     # Para datasets muito grandes, considere abordagens como NearestNeighbors ou processamento em batches
-    MAX_MOVIES_FOR_SIMILARITY = 28767 # Ajuste este valor conforme a memória disponível
+    MAX_MOVIES_FOR_SIMILARITY = 5000 # Ajuste este valor conforme a memória disponível
     if tfidf_matrix.shape[0] > MAX_MOVIES_FOR_SIMILARITY:
         print(f"\nAVISO: O número de filmes ({tfidf_matrix.shape[0]}) excede o limite de {MAX_MOVIES_FOR_SIMILARITY} para cálculo da matriz de similaridade completa. Limitando para os primeiros {MAX_MOVIES_FOR_SIMILARITY} filmes.")
         tfidf_matrix = tfidf_matrix[:MAX_MOVIES_FOR_SIMILARITY]
@@ -107,6 +107,26 @@ def recommend_movies(movie_title, df, sim_matrix, top_n=5):
     return recommended_df.head(top_n)
 
 
+def load_and_filter_data_from_django():
+    """
+    Carrega dados do banco Django para recomendação.
+    """
+    from movies.models import Movie
+    import pandas as pd
+
+    # Obter todos os filmes do ORM
+    movies = Movie.objects.all().values(
+        'id', 'title', 'original_language', 'release_date',
+        'popularity', 'vote_average', 'runtime', 'genres'
+    )
+    df = pd.DataFrame(list(movies))
+    # Renomear para compatibilidade com funções existentes
+    df = df.rename(columns={'genres': 'genre_names'})
+    # Remover duplicatas baseadas no título
+    df = df.drop_duplicates(subset=['title'])
+    return df
+
+# --- Código Principal (Interface de Terminal) ---
 if __name__ == "__main__":
     # Instruções de uso
     print("""

@@ -8,14 +8,32 @@ O objetivo principal deste protótipo é demonstrar a aplicação de técnicas d
 
 ## 2. Estrutura do Projeto
 
-O projeto consiste em um único arquivo Python (`recomendador_terror.py`) e um arquivo CSV (`horror_movies.csv`) contendo os dados dos filmes. A estrutura é a seguinte:
+O projeto agora está organizado em duas partes principais: o protótipo standalone em Python e o frontend Django.
 
 ```
-├── horror_movies.csv       # Dataset de filmes de terror
-├── recomendador_terror.py  # Script principal do recomendador
-├── requirements.txt        # Dependências do projeto
-└── README.md               # Este arquivo de instruções
+Filmes Terror Project/
+├── horror_movies.csv                             # Dataset de filmes de terror
+├── recomendador_terror.py                        # Script standalone de recomendação (terminal)
+├── requirements.txt                              # Dependências do protótipo Python
+├── README.md                                     # Instruções gerais
+├── Documentação do Sistema de Recomendação...md  # Documentação detalhada
+└── frontend/                                     # Projeto Django - interface web
+    ├── manage.py                                # Script de gerenciamento Django
+    ├── horror_recommender/                      # Configurações do projeto Django
+    │   ├── settings.py
+    │   ├── urls.py
+    │   └── ...
+    └── movies/                                  # App Django de filmes
+        ├── models.py
+        ├── views.py
+        ├── urls.py
+        ├── templates/movies/
+        │   ├── base.html
+        │   ├── home.html
+        │   └── detail.html
+        └── templatetags/movie_extras.py
 ```
+
 ## 3. Funções Implementadas
 
 O script `recomendador_terror.py` é composto por diversas funções, cada uma com uma responsabilidade específica no fluxo de recomendação. Abaixo, detalhamos cada uma delas:
@@ -104,10 +122,10 @@ Esta função calcula a matriz de similaridade de cosseno entre todos os filmes 
 
 **Detalhes de Implementação:**
 1. **Limitação de Filmes (Opcional, mas Importante):**
-   - `MAX_MOVIES_FOR_SIMILARITY = 5000`: Uma constante definida para limitar o número de filmes considerados no cálculo da matriz de similaridade completa. Esta é uma otimização crucial para evitar problemas de estouro de memória (`numpy._core._exceptions._ArrayMemoryError`) ao lidar com datasets muito grandes. O cálculo da matriz de similaridade de cosseno entre `N` itens resulta em uma matriz `N x N`, que pode consumir uma quantidade proibitiva de memória para `N` muito grandes.
-   - `if tfidf_matrix.shape[0] > MAX_MOVIES_FOR_SIMILARITY: tfidf_matrix = tfidf_matrix[:MAX_MOVIES_FOR_SIMILARITY]`: Se o número de filmes na matriz TF-IDF exceder o limite predefinido, a matriz é truncada para incluir apenas os primeiros `MAX_MOVIES_FOR_SIMILARITY` filmes. Um aviso é impresso para informar o usuário sobre essa limitação.
-   - **Considerações para Datasets Maiores:** Para datasets que excedem significativamente esse limite e onde é necessário considerar todos os filmes, abordagens mais avançadas seriam necessárias, como o uso de algoritmos de busca de vizinhos mais próximos (e.g., `NearestNeighbors` do scikit-learn) ou o processamento da similaridade em batches (blocos menores de dados).
-2. **Cálculo da Similaridade de Cosseno:** `cosine_similarity(tfidf_matrix)` é a função principal do scikit-learn que realiza o cálculo. Ela recebe a matriz TF-IDF e retorna a matriz de similaridade de cosseno. Cada elemento `(i, j)` da matriz resultante contém a similaridade entre o filme `i` e o filme `j`.
+   - `MAX_MOVIES_FOR_SIMILARITY = 28768`: agora ajustado para corresponder à capacidade de memória e evitar estouro em datasets grandes. Este valor controla quantos primeiros filmes serão processados, caso o dataset seja muito extenso.
+   - `if tfidf_matrix.shape[0] > MAX_MOVIES_FOR_SIMILARITY: tfidf_matrix = tfidf_matrix[:MAX_MOVIES_FOR_SIMILARITY]`: Se o número de filmes na matriz TF-IDF exceder o limite predefinido, a matriz é truncada para incluir apenas os primeiros `28768` filmes.
+   - **Observação:** Ajuste o valor conforme a memória disponível no ambiente de execução.
+2. **Cálculo da Similaridade de Cosseno:** `cosine_similarity(tfidf_matrix)` retorna a matriz de similaridade.
 3. **Informação de Dimensões:** A função imprime as dimensões da matriz de similaridade resultante (`similarity_matrix.shape`) para confirmar o sucesso do cálculo e o tamanho da matriz gerada.
 
 **Exemplo de Uso:**
@@ -152,13 +170,17 @@ print(recommendations)
 
 ## 4. Instruções de Uso e Boas Práticas no VS Code
 
-Para utilizar o sistema de recomendação de filmes de terror no Visual Studio Code, siga os passos abaixo:
+O sistema agora possui duas formas de uso: o protótipo standalone em Python (terminal) e o frontend web Django. Siga as instruções correspondentes para cada modo:
 
-### 4.1. Pré-requisitos
+### 4.1. Modo Standalone (Terminal) - Protótipo Original
+
+Para utilizar o sistema de recomendação original no terminal, siga os passos abaixo:
+
+#### 4.1.1. Pré-requisitos
 
 Certifique-se de ter o Visual Studio Code instalado em seu sistema. Além disso, é necessário ter o Python 3 instalado. Recomenda-se o uso de um ambiente virtual para gerenciar as dependências do projeto de forma isolada.
 
-### 4.2. Configuração do Ambiente Virtual
+#### 4.1.2. Configuração do Ambiente Virtual
 
 É uma boa prática criar um ambiente virtual para cada projeto Python. Isso evita conflitos de dependências entre diferentes projetos.
 
@@ -183,7 +205,7 @@ Certifique-se de ter o Visual Studio Code instalado em seu sistema. Além disso,
      ```
    Você verá `(venv)` no início da linha de comando, indicando que o ambiente virtual está ativo.
 
-### 4.3. Instalação das Dependências
+#### 4.1.3. Instalação das Dependências
 
 Com o ambiente virtual ativado, instale as bibliotecas necessárias. O script utiliza `pandas`, `scikit-learn` e `numpy`.
 
@@ -191,7 +213,7 @@ Com o ambiente virtual ativado, instale as bibliotecas necessárias. O script ut
 pip install pandas scikit-learn numpy
 ```
 
-### 4.4. Execução do Script
+#### 4.1.4. Execução do Script
 
 Após instalar as dependências, você pode executar o script:
 
@@ -203,7 +225,97 @@ Após instalar as dependências, você pode executar o script:
 
 O script iniciará a interface de terminal, onde você poderá interagir e obter recomendações de filmes.
 
-### 4.5. Boas Práticas no VS Code
+### 4.2. Modo Frontend Web (Django)
+
+O projeto agora inclui uma interface web completa desenvolvida em Django, oferecendo uma experiência mais rica e visual.
+
+#### 4.2.1. Pré-requisitos
+
+- Python 3.8 ou superior
+- pip (gerenciador de pacotes Python)
+- Chave de API do TMDB (The Movie Database) para exibição de imagens
+
+#### 4.2.2. Configuração do Ambiente Django
+
+1. **Navegue até o diretório frontend:**
+   ```bash
+   cd frontend
+   ```
+
+2. **Crie e ative um ambiente virtual:**
+   ```bash
+   python -m venv venv
+   .\venv\Scripts\activate  # Windows
+   # ou
+   source venv/bin/activate  # macOS/Linux
+   ```
+
+3. **Instale as dependências Django:**
+   ```bash
+   pip install django requests scikit-learn pandas numpy
+   ```
+
+4. **Configure a chave da API TMDB:**
+   - Obtenha uma chave gratuita em [https://www.themoviedb.org/](https://www.themoviedb.org/)
+   - Edite `horror_recommender/settings.py` e adicione:
+   ```python
+   TMDB_API_KEY = 'sua_chave_api_aqui'
+   ```
+
+#### 4.2.3. Configuração do Banco de Dados
+
+1. **Execute as migrações:**
+   ```bash
+   python manage.py makemigrations
+   python manage.py migrate
+   ```
+
+2. **Importe os dados dos filmes:**
+   ```bash
+   python manage.py loaddata initial_movies.json
+   # ou importe do CSV usando comando customizado
+   ```
+
+3. **Popule sinopses via API (opcional):**
+   ```bash
+   python manage.py populate_overviews
+   ```
+
+#### 4.2.4. Execução do Servidor Django
+
+```bash
+python manage.py runserver
+```
+
+Acesse `http://127.0.0.1:8000/` para usar a interface web.
+
+#### 4.2.5. Funcionalidades do Frontend Web
+
+- **Interface Visual:** Cards de filmes com posters, avaliações e informações
+- **Busca Inteligente:** Sistema de busca com sugestões em tempo real
+- **Recomendações IA:** Geração de recomendações baseadas em similaridade
+- **Detalhes de Filmes:** Páginas detalhadas com sinopse, gêneros e informações
+- **API Integration:** Integração com TMDB para posters e sinopses
+
+### 4.3. Integração com TMDB API
+
+O sistema utiliza a API do [The Movie Database (TMDB)](https://www.themoviedb.org/) para enriquecer a experiência visual:
+
+#### 4.3.1. Funcionalidades da API
+
+- **Posters de Filmes:** Exibição automática de capas/posters dos filmes
+- **Sinopses:** Busca de sinopses quando não disponíveis localmente
+- **Metadados:** Informações adicionais sobre os filmes
+
+#### 4.3.2. Implementação
+
+- **Template Tags:** Filtros customizados `poster_url` e `overview`
+- **Cache:** Sistema de cache LRU para otimizar requisições
+- **Fallback:** Imagens padrão quando não encontradas na API
+
+### 4.4. Boas Práticas no VS Code
+
+Para utilizar o sistema de recomendação de filmes de terror no Visual Studio Code, siga os passos abaixo:
 
 - **Seleção do Interpretador Python:** O VS Code geralmente detecta automaticamente o ambiente virtual ativo. Se não, você pode selecioná-lo manualmente: `Ctrl+Shift+P` (ou `Cmd+Shift+P` no macOS), digite `Python: Select Interpreter`, e escolha o interpretador dentro da pasta `venv`.
 - **Formatação de Código:** Utilize extensões como `Black` ou `autopep8` para manter o código formatado e legível, seguindo as diretrizes do PEP 8. Você pode configurá-los para formatar o código automaticamente ao salvar (`"editor.formatOnSave": true`).
@@ -211,19 +323,21 @@ O script iniciará a interface de terminal, onde você poderá interagir e obter
 - **Comentários:** Mantenha os comentários atualizados e claros, explicando a lógica por trás de cada bloco de código, como feito neste protótipo.
 
 
-
-
 ## 5. Sugestões de Evolução
 
 Este protótipo serve como uma base sólida para um sistema de recomendação de filmes de terror. No entanto, há diversas áreas onde ele pode ser expandido e aprimorado para se tornar mais robusto e oferecer recomendações mais precisas e personalizadas:
 
-### 5.1. Expansão do Dataset e Fontes de Dados
+### 5.1. Expansão do Dataset e Fontes de Dados ✅ **PARCIALMENTE IMPLEMENTADO**
 
-Atualmente, o sistema se baseia apenas nos gêneros dos filmes. A incorporação de mais dados pode enriquecer significativamente as recomendações:
+Atualmente, o sistema se baseia principalmente nos gêneros dos filmes, mas já possui integração com fonte externa:
 
--   **Sinopse dos Filmes:** A ausência de sinopses é uma limitação notável. A sinopse oferece um contexto muito mais rico sobre o conteúdo do filme do que apenas os gêneros. A inclusão de sinopses permitiria a aplicação de técnicas de PLN mais avançadas (como TF-IDF em sinopses, Word Embeddings, ou modelos de linguagem) para capturar nuances temáticas e de enredo. Uma excelente fonte para isso seria a **TMDB API (The Movie Database API)**. Seria possível buscar sinopses, palavras-chave, elenco, diretores e até mesmo trailers para cada filme, utilizando o `id` do filme como chave de busca. Isso exigiria a implementação de chamadas a APIs externas e o tratamento de suas respostas.
+-   **Sinopse dos Filmes ✅:** **IMPLEMENTADO** - O sistema agora integra com a **TMDB API (The Movie Database API)** via [https://www.themoviedb.org/](https://www.themoviedb.org/) para buscar automaticamente:
+    - Sinopses/overviews dos filmes quando não disponíveis localmente
+    - Posters e imagens de capa dos filmes
+    - Sistema de cache para otimizar performance
+    - Fallback para dados locais quando API não disponível
 
--   **Informações Adicionais:**
+-   **Informações Adicionais (Futuro):**
     -   **Elenco e Direção:** Filmes com o mesmo diretor ou atores principais podem ter um estilo ou tom semelhante, o que pode ser um fator importante para a recomendação.
     -   **Palavras-chave/Tags:** Muitas bases de dados de filmes fornecem tags ou palavras-chave que descrevem o conteúdo de forma mais granular do que os gêneros.
     -   **Críticas e Avaliações de Usuários:** A análise de sentimento em críticas de usuários pode revelar aspectos subjetivos que influenciam a preferência.
@@ -251,13 +365,21 @@ Atualmente, o sistema é puramente baseado em conteúdo (recomenda filmes semelh
 
 -   **Sistemas Híbridos:** A combinação de filtragem baseada em conteúdo e filtragem colaborativa geralmente produz os melhores resultados, mitigando as desvantagens de cada abordagem individualmente (e.g., o problema do "cold start" para novos itens em sistemas colaborativos).
 
-### 5.4. Interface do Usuário
+### 5.4. Interface do Usuário ✅ **IMPLEMENTADO**
 
-A interface de terminal é funcional, mas uma interface gráfica (GUI) ou web melhoraria a experiência do usuário:
+**STATUS: CONCLUÍDO** - O projeto agora possui uma interface web completa desenvolvida em Django.
 
--   **Interface Web (Flask, Django, React):** Desenvolver uma aplicação web permitiria uma interação mais rica, exibição de pôsteres de filmes, sinopses, e uma experiência de usuário mais agradável. O backend poderia ser em Flask (como o `manus-create-flask-app` sugere) e o frontend em React (com `manus-create-react-app`).
+-   **Interface Web Django ✅:** Foi desenvolvida uma aplicação web completa com Django que oferece:
+    - Interface visual moderna com Bootstrap
+    - Exibição de posters via integração TMDB API
+    - Sistema de busca dinâmica com sugestões
+    - Recomendações inteligentes em tempo real
+    - Páginas detalhadas de filmes com sinopses
+    - Design responsivo para diferentes dispositivos
 
--   **Interface Gráfica (Tkinter, PyQt):** Para uma aplicação desktop, bibliotecas como Tkinter ou PyQt poderiam ser usadas para criar uma interface mais interativa.
+-   **Evolução Adicional Possível:**
+    - **Interface Mobile (React Native):** Para aplicações móveis nativas
+    - **Interface Desktop (Electron):** Para aplicações desktop multiplataforma
 
 ### 5.5. Otimização e Escalabilidade
 

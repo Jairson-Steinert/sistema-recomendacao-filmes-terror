@@ -259,6 +259,38 @@
             color: #ffffff !important;
             outline: none !important;
         }
+        
+        /* Permitir overflow visível para dropdowns dentro do painel de busca */
+        #searchPanel .card {
+            overflow: visible !important;
+        }
+        /* Elevar z-index do dropdown de busca acima de todas as seções */
+        #searchPanel .dropdown-menu, #movieResults {
+            position: absolute !important;
+            z-index: 99999 !important;
+            width: 100%;
+        }
+
+        /* Permitir overflow visível para dropdowns no painel de recomendações */
+        #recommendPanel .card {
+            overflow: visible !important;
+        }
+        /* Elevar z-index do dropdown de recomendações acima de todas as seções */
+        #recommendPanel .dropdown-menu {
+            position: absolute !important;
+            z-index: 99998 !important;
+        }
+
+        /* Ajuste de z-index final para manter busca acima de recomendações */
+        #searchPanel {
+            z-index: 100000 !important;
+        }
+        #movieResults {
+            z-index: 100001 !important;
+        }
+        #recommendPanel {
+            z-index: 10 !important;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}

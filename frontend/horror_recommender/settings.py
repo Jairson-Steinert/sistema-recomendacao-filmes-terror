@@ -129,7 +129,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 # Chave da API TMDB lida do .env ou variável de ambiente do sistema
 TMDB_API_KEY = os.getenv('TMDB_API_KEY')
-DEFAULT_POSTER_URL = STATIC_URL + 'movies/img/no_poster.png'
+# URL de fallback externo caso não haja poster no TMDB
+DEFAULT_POSTER_URL = os.getenv('DEFAULT_POSTER_URL', 'https://via.placeholder.com/500x750?text=No+Poster')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

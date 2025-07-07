@@ -117,7 +117,8 @@ class AIRecommendationService:
                 try:
                     django_movie = Movie.objects.get(title=rec["title"])
                     # Adicionar score de similaridade como atributo dinâmico
-                    django_movie.similarity_score = float(rec["similarity_score"])
+                    score = rec.at["similarity_score"]  # obtém valor numérico do pandas Series
+                    django_movie.similarity_score = float(score)
                     result.append(django_movie)
                 except Movie.DoesNotExist:
                     continue
