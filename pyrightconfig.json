@@ -1,0 +1,39 @@
+{
+    "include": [
+        ".",
+        "frontend"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.*",
+        ".venv",
+        "venv"
+    ],
+    "extraPaths": [
+        "./frontend",
+        "."
+    ],
+    "pyrightVersion": "latest",
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+    "autoSearchPaths": true,
+    "stubPath": "./typings",
+    "reportMissingImports": "warning",
+    "reportMissingTypeStubs": false,
+    "executionEnvironments": [
+        {
+            "root": "./frontend",
+            "pythonVersion": "3.8",
+            "pythonPlatform": "Windows",
+            "extraPaths": [
+                "./frontend"
+            ]
+        },
+        {
+            "root": ".",
+            "pythonVersion": "3.8",
+            "pythonPlatform": "Windows"
+        }
+    ]
+}
