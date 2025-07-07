@@ -61,6 +61,8 @@ Esta função é responsável por carregar o dataset de filmes a partir de um ar
 horror_movies_df = load_and_filter_data("horror_movies.csv")
 ```
 
+> **Nota:** no fluxo principal do script (`__main__`), esta função serve como fallback automático quando `load_and_filter_data_from_django()` falha ou retorna um DataFrame vazio.
+
 ### 3.2. `preprocess_text(text)`
 
 **Descrição:**

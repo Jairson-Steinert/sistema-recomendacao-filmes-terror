@@ -71,31 +71,26 @@ Este projeto fornece um sistema completo de recomendação de filmes de terror c
 
 ### 🎯 Método Recomendado: Backend Integrado com Django
 
-1. **Configure o Django primeiro** (se ainda não fez):
-   ```powershell
-   # Instale dependências Django
-   pip install -r frontend/requirements_django.txt
-   
-   # Configure e migre banco de dados
-   cd frontend
-   python manage.py migrate
-   
-   # Importe dados do CSV para o banco
-   python manage.py import_movies ../horror_movies.csv
-   
-   # Crie superuser (opcional)
-   python manage.py create_admin
-   
-   # Configure chave TMDB (opcional)
-   echo "TMDB_API_KEY=sua_chave_aqui" > .env
-   
-   # Popule sinopses via TMDB (opcional)
-   python manage.py populate_overviews
-   cd ..
-   ```
+Antes de executar o backend, garanta que o banco de dados esteja configurado e populado:
+```powershell
+# Migre as tabelas do Django
+cd frontend
+python manage.py migrate
 
-2. **Execute o backend** (agora lê do banco Django):
+# Importe dados do CSV para o banco (fallback automático para CSV quando necessário)
+python manage.py import_movies ../horror_movies.csv
+
+# (Opcional) Crie superuser e configure TMDB
+python manage.py create_admin
+echo "TMDB_API_KEY=sua_chave_aqui" > .env
+
+# (Opcional) Popule sinopses via TMDB
+python manage.py populate_overviews
+```  
+
+2. **Execute o backend** (usa banco Django com fallback para CSV):
    ```powershell
+   cd ..  # volte para o diretório raiz do projeto
    python recomendador_terror.py
    ```
 

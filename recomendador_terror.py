@@ -140,11 +140,19 @@ if __name__ == "__main__":
     ================================================================================
     """)
 
-    # Caminho para o dataset
+    # Caminho para o dataset CSV (fallback)
     DATASET_PATH = 'horror_movies.csv'
-
-    # Carregar e filtrar os dados
-    horror_movies_df = load_and_filter_data(DATASET_PATH)
+    # Tenta carregar do banco Django; se falhar ou vazio, faz fallback para CSV
+    try:
+        horror_movies_df = load_and_filter_data_from_django()
+        if horror_movies_df.empty:
+            print("\nNenhum filme encontrado no banco; usando CSV como fallback.")
+            horror_movies_df = load_and_filter_data(DATASET_PATH)
+        else:
+            print("\nDados carregados do banco Django com sucesso.")
+    except Exception as e:
+        print(f"\nErro ao carregar do banco Django ({e}); usando CSV como fallback.")
+        horror_movies_df = load_and_filter_data(DATASET_PATH)
 
     if not horror_movies_df.empty:
         # Vetorizar os gêneros
